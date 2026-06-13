@@ -1,9 +1,15 @@
+// Word pool database for the innocent players
+const wordList = [
+    "Apple", "Banana", "Coffee", "Laptop", "Bitcoin", 
+    "Hollywood", "Spaghetti", "Football", "Spaceship", "Library",
+    "Elevator", "Microscope", "Subway", "Helicopter", "Campfire"
+];
+
 // Game State Variables
 let totalPlayers = 3;
 let imposterCount = 1;
 let playersRoles = []; 
 let currentWord = "";
-let currentCategory = "";
 let currentPlayerIndex = 0;
 let isRevealed = false;
 
@@ -15,8 +21,6 @@ const gameOverScreen = document.getElementById('game-over-screen');
 
 const totalPlayersSelect = document.getElementById('total-players');
 const imposterCountSelect = document.getElementById('imposter-count');
-const wordInput = document.getElementById('game-word');
-const categoryInput = document.getElementById('game-category');
 const startBtn = document.getElementById('start-btn');
 const errorMsg = document.getElementById('error-msg');
 
@@ -28,12 +32,9 @@ const revealTitle = document.getElementById('reveal-title');
 const secretBox = document.getElementById('secret-box');
 const doneRevealBtn = document.getElementById('done-reveal-btn');
 const restartBtn = document.getElementById('restart-btn');
-const discussionInstruction = document.getElementById('discussion-instruction');
 
+// Populate dynamic dropdown options (3 to 15 players)
 function initSetupOptions() {
-    totalPlayersSelect.innerHTML = "";
-    imposterCountSelect.innerHTML = "";
-    
     for (let i = 3; i <= 15; i++) {
         let opt = document.createElement('option');
         opt.value = i;
@@ -48,6 +49,7 @@ function initSetupOptions() {
     }
 }
 
+// Validate setup configurations
 function validateSetup() {
     const p = parseInt(totalPlayersSelect.value);
     const imp = parseInt(imposterCountSelect.value);
@@ -57,36 +59,21 @@ function validateSetup() {
         errorMsg.style.display = 'block';
         return false;
     }
-    
-    if (wordInput.value.trim() === "") {
-        errorMsg.innerText = "Please enter a secret word for the round.";
-        errorMsg.style.display = 'block';
-        return false;
-    }
-
-    if (categoryInput.value.trim() === "") {
-        errorMsg.innerText = "Please enter a category hint.";
-        errorMsg.style.display = 'block';
-        return false;
-    }
-
     errorMsg.style.display = 'none';
     totalPlayers = p;
     imposterCount = imp;
-    currentWord = wordInput.value.trim();
-    currentCategory = categoryInput.value.trim();
     return true;
 }
 
+// Set up roles assignment array
 function setupGameData() {
+    currentWord = wordList[Math.floor(Math.random() * wordList.length)];
     playersRoles = [];
     
-    // Assign secret word to all players initially
     for (let i = 0; i < totalPlayers; i++) {
         playersRoles.push({ id: i + 1, isImposter: false, word: currentWord });
     }
 
-    // Randomly inject the chosen number of imposters
     let assignedImposters = 0;
     while (assignedImposters < imposterCount) {
         let randIndex = Math.floor(Math.random() * totalPlayers);
@@ -131,10 +118,10 @@ function handleRevealTap() {
         
         if (player.isImposter) {
             secretBox.classList.add('revealed', 'imposter');
-            secretBox.innerHTML = `You are the IMPOSTER!<br><span style="font-size:0.9rem; font-weight:normal; color:#fca5a5; margin-top:5px; display:block;">Category Hint: ${currentCategory}</span>`;
+            secretBox.innerHTML = `You are the IMPOSTER!<br><span style="font-size:0.9rem; font-weight:normal; color:#fca5a5; margin-top:5px; display:block;">Blend in and try to guess the secret word.</span>`;
         } else {
             secretBox.classList.add('revealed', 'innocent');
-            secretBox.innerHTML = `Secret Word:<br><span style="font-size:1.8rem; display:block; margin-top:5px;">${player.word}</span><span style="font-size:0.9rem; font-weight:normal; color:#a7f3d0; margin-top:5px; display:block;">Category Hint: ${currentCategory}</span>`;
+            secretBox.innerHTML = `Secret Word:<br><span style="font-size:1.8rem; display:block; margin-top:5px;">${player.word}</span>`;
         }
         doneRevealBtn.disabled = false;
     }
@@ -145,12 +132,11 @@ function handleNextPlayer() {
     if (currentPlayerIndex < totalPlayers) {
         goToPassScreen();
     } else {
-        discussionInstruction.innerHTML = `The category is: <strong>${currentCategory}</strong>. Everyone knows their role. Start discussing and find the imposter(s)!`;
         showScreen(gameOverScreen);
     }
 }
 
-// Event Triggers
+// UI Event Listeners
 startBtn.addEventListener('click', () => {
     if (validateSetup()) {
         setupGameData();
@@ -163,10 +149,7 @@ imposterCountSelect.addEventListener('change', validateSetup);
 confirmPassBtn.addEventListener('click', goToRevealScreen);
 secretBox.addEventListener('click', handleRevealTap);
 doneRevealBtn.addEventListener('click', handleNextPlayer);
-restartBtn.addEventListener('click', () => {
-    wordInput.value = "";
-    categoryInput.value = "";
-    showScreen(setupScreen);
-});
+restartBtn.addEventListener('click', () => showScreen(setupScreen));
 
+// Fire layout logic on page load
 initSetupOptions();
