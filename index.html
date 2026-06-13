@@ -21,8 +21,12 @@
                 <select id="imposter-count"></select>
             </div>
             <div class="form-group">
-                <label for="game-category">Enter Category (e.g., food, animal, country, tech)</label>
-                <input type="text" id="game-category" placeholder="Type a category..." autocomplete="off">
+                <label for="game-word">Secret Word (for Non-Imposters)</label>
+                <input type="text" id="game-word" placeholder="e.g., Plastic Toy, Cheetah, Pizza..." autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="game-category">Category Hint (Announce to everyone)</label>
+                <input type="text" id="game-category" placeholder="e.g., Object, Animal, Food..." autocomplete="off">
             </div>
             <button id="start-btn">Start Game</button>
             <div id="error-msg" class="error-message"></div>
@@ -45,7 +49,7 @@
 
         <div id="game-over-screen" class="screen">
             <h1>All Secrets Passed!</h1>
-            <p class="instruction">Everyone knows their role. Start discussing and find the imposter(s)!</p>
+            <p class="instruction" id="discussion-instruction">The category is: <strong>Object</strong>. Start discussing and find the imposter(s)!</p>
             <button id="restart-btn">Play Again</button>
         </div>
     </div>
