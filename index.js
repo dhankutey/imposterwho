@@ -1,9 +1,14 @@
-// Word pool database for the innocent players
-const wordList = [
-    "Apple", "Banana", "Coffee", "Laptop", "Bitcoin", 
-    "Hollywood", "Spaghetti", "Football", "Spaceship", "Library",
-    "Elevator", "Microscope", "Subway", "Helicopter", "Campfire"
-];
+// Offline Category Dictionary Database
+const categoryDatabase = {
+    food: ["Pizza", "Burger", "Sushi", "Spaghetti", "Taco", "Pancake", "Ice Cream", "Steak", "Salad", "Ramen", "Lasagna", "Waffles"],
+    animal: ["Lion", "Elephant", "Giraffe", "Dolphin", "Penguin", "Kangaroo", "Cheetah", "Panda", "Tiger", "Koala", "Wolf", "Octopus"],
+    country: ["Japan", "Canada", "Brazil", "Australia", "France", "Germany", "Egypt", "Italy", "India", "Mexico", "Switzerland", "Spain"],
+    tech: ["Laptop", "Smartphone", "Bitcoin", "Internet", "Robot", "Smartwatch", "Drone", "Headphones", "Camera", "Microscope", "Satellite"],
+    sports: ["Football", "Basketball", "Tennis", "Cricket", "Baseball", "Volleyball", "Rugby", "Swimming", "Boxing", "Golf", "Badminton"],
+    clothing: ["T-Shirt", "Jacket", "Sneakers", "Jeans", "Sweater", "Dress", "Scarf", "Boots", "Hat", "Socks", "Suit", "Gloves"],
+    places: ["Library", "Subway", "Hospital", "Cinema", "Museum", "Airport", "Restaurant", "Beach", "Gym", "Supermarket", "Park", "School"],
+    vehicles: ["Helicopter", "Submarine", "Motorcycle", "Spaceship", "Bicycle", "Train", "Airplane", "Tractor", "Scooter", "Ambulance", "Rocket"]
+};
 
 // Game State Variables
 let totalPlayers = 3;
@@ -21,6 +26,7 @@ const gameOverScreen = document.getElementById('game-over-screen');
 
 const totalPlayersSelect = document.getElementById('total-players');
 const imposterCountSelect = document.getElementById('imposter-count');
+const categoryInput = document.getElementById('game-category');
 const startBtn = document.getElementById('start-btn');
 const errorMsg = document.getElementById('error-msg');
 
@@ -33,7 +39,6 @@ const secretBox = document.getElementById('secret-box');
 const doneRevealBtn = document.getElementById('done-reveal-btn');
 const restartBtn = document.getElementById('restart-btn');
 
-// Populate dynamic dropdown options (3 to 15 players)
 function initSetupOptions() {
     for (let i = 3; i <= 15; i++) {
         let opt = document.createElement('option');
@@ -49,7 +54,6 @@ function initSetupOptions() {
     }
 }
 
-// Validate setup configurations
 function validateSetup() {
     const p = parseInt(totalPlayersSelect.value);
     const imp = parseInt(imposterCountSelect.value);
@@ -59,15 +63,43 @@ function validateSetup() {
         errorMsg.style.display = 'block';
         return false;
     }
+    
+    if (categoryInput.value.trim() === "") {
+        errorMsg.innerText = "Please enter a category before starting.";
+        errorMsg.style.display = 'block';
+        return false;
+    }
+
     errorMsg.style.display = 'none';
     totalPlayers = p;
     imposterCount = imp;
     return true;
 }
 
-// Set up roles assignment array
+function getWordFromCategory(userInput) {
+    const cleanInput = userInput.trim().toLowerCase();
+    
+    // Direct match check
+    if (categoryDatabase[cleanInput]) {
+        const pool = categoryDatabase[cleanInput];
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+    
+    // Fuzzy substring matching fallback
+    for (let key in categoryDatabase) {
+        if (cleanInput.includes(key) || key.includes(cleanInput)) {
+            const pool = categoryDatabase[key];
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+    }
+    
+    // Default fallback list if no matching category is found offline
+    const universalBackupPool = ["Banana", "Coffee", "Laptop", "Hollywood", "Spaghetti", "Football", "Spaceship", "Library", "Elevator", "Campfire"];
+    return universalBackupPool[Math.floor(Math.random() * universalBackupPool.length)];
+}
+
 function setupGameData() {
-    currentWord = wordList[Math.floor(Math.random() * wordList.length)];
+    currentWord = getWordFromCategory(categoryInput.value);
     playersRoles = [];
     
     for (let i = 0; i < totalPlayers; i++) {
@@ -136,7 +168,7 @@ function handleNextPlayer() {
     }
 }
 
-// UI Event Listeners
+// Event Triggers
 startBtn.addEventListener('click', () => {
     if (validateSetup()) {
         setupGameData();
@@ -151,5 +183,4 @@ secretBox.addEventListener('click', handleRevealTap);
 doneRevealBtn.addEventListener('click', handleNextPlayer);
 restartBtn.addEventListener('click', () => showScreen(setupScreen));
 
-// Fire layout logic on page load
 initSetupOptions();
