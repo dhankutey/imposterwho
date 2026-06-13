@@ -1,20 +1,9 @@
-// Offline Category Dictionary Database
-const categoryDatabase = {
-    food: ["Pizza", "Burger", "Sushi", "Spaghetti", "Taco", "Pancake", "Ice Cream", "Steak", "Salad", "Ramen", "Lasagna", "Waffles"],
-    animal: ["Lion", "Elephant", "Giraffe", "Dolphin", "Penguin", "Kangaroo", "Cheetah", "Panda", "Tiger", "Koala", "Wolf", "Octopus"],
-    country: ["Japan", "Canada", "Brazil", "Australia", "France", "Germany", "Egypt", "Italy", "India", "Mexico", "Switzerland", "Spain"],
-    tech: ["Laptop", "Smartphone", "Bitcoin", "Internet", "Robot", "Smartwatch", "Drone", "Headphones", "Camera", "Microscope", "Satellite"],
-    sports: ["Football", "Basketball", "Tennis", "Cricket", "Baseball", "Volleyball", "Rugby", "Swimming", "Boxing", "Golf", "Badminton"],
-    clothing: ["T-Shirt", "Jacket", "Sneakers", "Jeans", "Sweater", "Dress", "Scarf", "Boots", "Hat", "Socks", "Suit", "Gloves"],
-    places: ["Library", "Subway", "Hospital", "Cinema", "Museum", "Airport", "Restaurant", "Beach", "Gym", "Supermarket", "Park", "School"],
-    vehicles: ["Helicopter", "Submarine", "Motorcycle", "Spaceship", "Bicycle", "Train", "Airplane", "Tractor", "Scooter", "Ambulance", "Rocket"]
-};
-
 // Game State Variables
 let totalPlayers = 3;
 let imposterCount = 1;
 let playersRoles = []; 
 let currentWord = "";
+let currentCategory = "";
 let currentPlayerIndex = 0;
 let isRevealed = false;
 
@@ -26,6 +15,7 @@ const gameOverScreen = document.getElementById('game-over-screen');
 
 const totalPlayersSelect = document.getElementById('total-players');
 const imposterCountSelect = document.getElementById('imposter-count');
+const wordInput = document.getElementById('game-word');
 const categoryInput = document.getElementById('game-category');
 const startBtn = document.getElementById('start-btn');
 const errorMsg = document.getElementById('error-msg');
@@ -38,8 +28,12 @@ const revealTitle = document.getElementById('reveal-title');
 const secretBox = document.getElementById('secret-box');
 const doneRevealBtn = document.getElementById('done-reveal-btn');
 const restartBtn = document.getElementById('restart-btn');
+const discussionInstruction = document.getElementById('discussion-instruction');
 
 function initSetupOptions() {
+    totalPlayersSelect.innerHTML = "";
+    imposterCountSelect.innerHTML = "";
+    
     for (let i = 3; i <= 15; i++) {
         let opt = document.createElement('option');
         opt.value = i;
@@ -64,8 +58,14 @@ function validateSetup() {
         return false;
     }
     
+    if (wordInput.value.trim() === "") {
+        errorMsg.innerText = "Please enter a secret word for the round.";
+        errorMsg.style.display = 'block';
+        return false;
+    }
+
     if (categoryInput.value.trim() === "") {
-        errorMsg.innerText = "Please enter a category before starting.";
+        errorMsg.innerText = "Please enter a category hint.";
         errorMsg.style.display = 'block';
         return false;
     }
@@ -73,39 +73,20 @@ function validateSetup() {
     errorMsg.style.display = 'none';
     totalPlayers = p;
     imposterCount = imp;
+    currentWord = wordInput.value.trim();
+    currentCategory = categoryInput.value.trim();
     return true;
 }
 
-function getWordFromCategory(userInput) {
-    const cleanInput = userInput.trim().toLowerCase();
-    
-    // Direct match check
-    if (categoryDatabase[cleanInput]) {
-        const pool = categoryDatabase[cleanInput];
-        return pool[Math.floor(Math.random() * pool.length)];
-    }
-    
-    // Fuzzy substring matching fallback
-    for (let key in categoryDatabase) {
-        if (cleanInput.includes(key) || key.includes(cleanInput)) {
-            const pool = categoryDatabase[key];
-            return pool[Math.floor(Math.random() * pool.length)];
-        }
-    }
-    
-    // Default fallback list if no matching category is found offline
-    const universalBackupPool = ["Banana", "Coffee", "Laptop", "Hollywood", "Spaghetti", "Football", "Spaceship", "Library", "Elevator", "Campfire"];
-    return universalBackupPool[Math.floor(Math.random() * universalBackupPool.length)];
-}
-
 function setupGameData() {
-    currentWord = getWordFromCategory(categoryInput.value);
     playersRoles = [];
     
+    // Assign secret word to all players initially
     for (let i = 0; i < totalPlayers; i++) {
         playersRoles.push({ id: i + 1, isImposter: false, word: currentWord });
     }
 
+    // Randomly inject the chosen number of imposters
     let assignedImposters = 0;
     while (assignedImposters < imposterCount) {
         let randIndex = Math.floor(Math.random() * totalPlayers);
@@ -150,10 +131,10 @@ function handleRevealTap() {
         
         if (player.isImposter) {
             secretBox.classList.add('revealed', 'imposter');
-            secretBox.innerHTML = `You are the IMPOSTER!<br><span style="font-size:0.9rem; font-weight:normal; color:#fca5a5; margin-top:5px; display:block;">Blend in and try to guess the secret word.</span>`;
+            secretBox.innerHTML = `You are the IMPOSTER!<br><span style="font-size:0.9rem; font-weight:normal; color:#fca5a5; margin-top:5px; display:block;">Category Hint: ${currentCategory}</span>`;
         } else {
             secretBox.classList.add('revealed', 'innocent');
-            secretBox.innerHTML = `Secret Word:<br><span style="font-size:1.8rem; display:block; margin-top:5px;">${player.word}</span>`;
+            secretBox.innerHTML = `Secret Word:<br><span style="font-size:1.8rem; display:block; margin-top:5px;">${player.word}</span><span style="font-size:0.9rem; font-weight:normal; color:#a7f3d0; margin-top:5px; display:block;">Category Hint: ${currentCategory}</span>`;
         }
         doneRevealBtn.disabled = false;
     }
@@ -164,6 +145,7 @@ function handleNextPlayer() {
     if (currentPlayerIndex < totalPlayers) {
         goToPassScreen();
     } else {
+        discussionInstruction.innerHTML = `The category is: <strong>${currentCategory}</strong>. Everyone knows their role. Start discussing and find the imposter(s)!`;
         showScreen(gameOverScreen);
     }
 }
@@ -181,6 +163,10 @@ imposterCountSelect.addEventListener('change', validateSetup);
 confirmPassBtn.addEventListener('click', goToRevealScreen);
 secretBox.addEventListener('click', handleRevealTap);
 doneRevealBtn.addEventListener('click', handleNextPlayer);
-restartBtn.addEventListener('click', () => showScreen(setupScreen));
+restartBtn.addEventListener('click', () => {
+    wordInput.value = "";
+    categoryInput.value = "";
+    showScreen(setupScreen);
+});
 
 initSetupOptions();
